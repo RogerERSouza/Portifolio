@@ -38,6 +38,7 @@
     --neon-30: rgba(0, 255, 200, 0.3);
     --neon-25: rgba(120, 207, 165, 0.25);
     --neon-22: rgba(120, 207, 165, 0.22);
+    transition: background-color 0.5s ease, color 0.5s ease;
 }
 
 :root.dark-mode {
@@ -68,6 +69,7 @@
     --neon-30: rgba(138, 43, 226, 0.4);
     --neon-25: rgba(138, 43, 226, 0.45);
     --neon-22: rgba(138, 43, 226, 0.4);
+    transition: background-color 0.5s ease, color 0.5s ease;
 }
 
 .transition-active {
