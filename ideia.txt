@@ -1,0 +1,1 @@
+Barra de slide no topo se tranformar em um button que ao clicar abre um circulo com opções para dar slide
