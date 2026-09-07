@@ -20,6 +20,7 @@
     --key: #161616;
     --keyColor: #fff;
     --accent: #e53935;
+    --radial-hover: #35b98a;
     --gap: 8px;
     --glass: rgba(255, 255, 255, 0.02);
 
@@ -51,6 +52,7 @@
     --key: #161616;
     --keyColor: #fff;
     --accent: #b5485d;
+    --radial-hover: #8a2be2;
     --gap: 8px;
     --glass: rgba(255, 255, 255, 0.05);
 
@@ -101,35 +103,130 @@ text {
     margin-left: 5%;
     border-bottom: 2px solid var(--fontcolor);
     display: flex;
+    align-items: center;
     justify-content: space-between;
 }
 
-.header-nav {
-    width: 45%;
-    height: 100%;
-    margin-left: 5%;
+.radial-menu-btn {
+    width: 4vh;
+    height: 4vh;
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 0;
     display: flex;
-    justify-content: space-evenly;
     align-items: center;
-}
-
-.header-nav-item {
-    display: flex;
     justify-content: center;
-    align-items: center;
-    font-size: 22px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    transform-origin: center;
 }
 
-.header-nav-item a {
+.radial-menu-btn:hover {
+    transform: scale(1.1);
+}
+
+.radial-menu-btn svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.radial-menu-btn line {
+    stroke: var(--fontcolor);
+    transition: stroke 0.3s ease;
+}
+
+/* Overlay + disco de navegação radial */
+.radial-menu-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 2000;
+}
+
+.radial-menu-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.radial-menu {
+    width: 340px;
+    max-width: 78vw;
+    height: 340px;
+    max-height: 78vw;
+    transform: scale(0.7) rotate(-25deg);
+    transition: transform 0.35s ease;
+}
+
+.radial-menu-overlay.show .radial-menu {
+    transform: scale(1) rotate(0deg);
+}
+
+/* Cada setor é um <a href="#id"> real. A expansão no hover NÃO é feita
+   por transform/scale (isso distorceria a geometria do disco) — o próprio
+   JS recalcula o raio do setor e a posição do label/ícone. Aqui só
+   deixamos as transições suaves dos atributos que o JS altera. */
+.radial-item {
     text-decoration: none;
 }
 
-.header-nav-item a:hover {
-    text-decoration: underline;
+.radial-sector {
+    fill: var(--body);
+    stroke: var(--divisor);
+    stroke-width: 3;
+    cursor: pointer;
+    transition: d 0.2s ease, fill 0.2s ease, filter 0.2s ease;
 }
 
-.header-nav>label {
-    font-size: 32px;
+.radial-item.is-active .radial-sector {
+    fill: var(--radial-hover);
+    filter: drop-shadow(0 0 12px var(--neon-40));
+}
+
+.radial-shine {
+    pointer-events: none;
+}
+
+.radial-outline {
+    fill: none;
+    stroke: var(--divisor);
+    stroke-width: 6;
+}
+
+.radial-icon {
+    fill: none;
+    stroke: var(--fontcolor);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+    transition: transform 0.2s ease, stroke 0.2s ease;
+}
+
+.radial-item.is-active .radial-icon {
+    stroke: var(--fontcolorAlt);
+}
+
+.radial-label {
+    fill: var(--fontcolor);
+    font-family: "Josefin Sans", sans-serif;
+    font-size: 18px;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+    user-select: none;
+    transition: x 0.2s ease, y 0.2s ease, fill 0.2s ease;
+}
+
+.radial-item.is-active .radial-label {
+    fill: var(--fontcolorAlt);
 }
 
 .header-actions {

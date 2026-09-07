@@ -180,3 +180,190 @@ prev.addEventListener('click', () => {
 });
 
 window.addEventListener('resize', updateSlide);
+
+// Menu radial (disco de navegação) — substitui visualmente o header-nav
+// original, mas mantém a mesma fonte de verdade: os IDs #about, #skills,
+// #social, #projects, #contact das seções.
+const radialItems = [
+  { id: 'about', label: 'Sobre Mim', icon: 'person' },
+  { id: 'skills', label: 'Skills', icon: 'code' },
+  { id: 'social', label: 'Redes Sociais', icon: 'share' },
+  { id: 'projects', label: 'Projetos', icon: 'folder' },
+  { id: 'contact', label: 'Contato', icon: 'mail' }
+];
+
+const svgNS = 'http://www.w3.org/2000/svg';
+const radialMenu = document.getElementById('radialMenu');
+const radialBtn = document.getElementById('radialMenuBtn');
+const radialOverlay = document.getElementById('radialMenuOverlay');
+
+const cx = 200;
+const cy = 200;
+const NORMAL_RADIUS = 190;
+const HOVER_RADIUS = 205; // setor "salta" pra fora do disco no hover
+const LABEL_RATIO = 0.72; // posição do texto, proporcional ao raio atual
+const ICON_RATIO = 0.42; // posição do ícone, proporcional ao raio atual
+const sliceAngle = 360 / radialItems.length;
+
+function polarToCartesian(angleDeg, radius) {
+  const angleRad = (angleDeg - 90) * Math.PI / 180;
+  return {
+    x: cx + radius * Math.cos(angleRad),
+    y: cy + radius * Math.sin(angleRad)
+  };
+}
+
+// Monta o "d" do setor (fatia de pizza) pro raio informado
+function sectorPath(startAngle, endAngle, radius) {
+  const start = polarToCartesian(startAngle, radius);
+  const end = polarToCartesian(endAngle, radius);
+  const largeArc = (endAngle - startAngle) > 180 ? 1 : 0;
+  return `M${cx},${cy} L${start.x},${start.y} A${radius},${radius} 0 ${largeArc},1 ${end.x},${end.y} Z`;
+}
+
+// Desenha um ícone simples (só formas básicas) dentro do grupo passado
+function drawIcon(type, group) {
+  const addShape = (tag, attrs) => {
+    const shape = document.createElementNS(svgNS, tag);
+    Object.entries(attrs).forEach(([key, value]) => shape.setAttribute(key, value));
+    group.appendChild(shape);
+  };
+
+  if (type === 'person') {
+    addShape('circle', { cx: 0, cy: -9, r: 7 });
+    addShape('path', { d: 'M -14,14 C -14,-1 14,-1 14,14' });
+  }
+
+  if (type === 'code') {
+    addShape('path', { d: 'M -8,-9 L -18,0 L -8,9' });
+    addShape('path', { d: 'M 8,-9 L 18,0 L 8,9' });
+  }
+
+  if (type === 'share') {
+    addShape('circle', { cx: -14, cy: -10, r: 4.5 });
+    addShape('circle', { cx: -14, cy: 10, r: 4.5 });
+    addShape('circle', { cx: 12, cy: 0, r: 4.5 });
+    addShape('line', { x1: -14, y1: -10, x2: 12, y2: 0 });
+    addShape('line', { x1: -14, y1: 10, x2: 12, y2: 0 });
+  }
+
+  if (type === 'folder') {
+    addShape('path', { d: 'M -16,-6 L -4,-6 L 0,-2 L 16,-2 L 16,12 L -16,12 Z' });
+  }
+
+  if (type === 'mail') {
+    addShape('rect', { x: -16, y: -10, width: 32, height: 20, rx: 2 });
+    addShape('path', { d: 'M -16,-10 L 0,4 L 16,-10' });
+  }
+}
+
+// Brilho suave saindo do centro (dá profundidade sem precisar de imagem)
+const defs = document.createElementNS(svgNS, 'defs');
+const shineGradient = document.createElementNS(svgNS, 'radialGradient');
+shineGradient.setAttribute('id', 'radialShineGradient');
+shineGradient.innerHTML = `
+  <stop offset="0%" stop-color="#fff" stop-opacity="0.18" />
+  <stop offset="100%" stop-color="#fff" stop-opacity="0" />
+`;
+defs.appendChild(shineGradient);
+radialMenu.appendChild(defs);
+
+radialItems.forEach((item, i) => {
+  const startAngle = i * sliceAngle;
+  const endAngle = startAngle + sliceAngle;
+  const midAngle = startAngle + sliceAngle / 2;
+
+  // <a> real dentro do SVG: mesma lógica de navegação por âncora do projeto
+  // original (href="#about" etc.), então o scroll suave já vem do
+  // "scroll-behavior: smooth" que já existe no style.css — sem JS extra.
+  const itemLink = document.createElementNS(svgNS, 'a');
+  itemLink.classList.add('radial-item');
+  itemLink.setAttribute('href', `#${item.id}`);
+  itemLink.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', `#${item.id}`);
+
+  const sector = document.createElementNS(svgNS, 'path');
+  sector.setAttribute('d', sectorPath(startAngle, endAngle, NORMAL_RADIUS));
+  sector.classList.add('radial-sector');
+  itemLink.appendChild(sector);
+
+  const labelPos = polarToCartesian(midAngle, NORMAL_RADIUS * LABEL_RATIO);
+  const label = document.createElementNS(svgNS, 'text');
+  label.setAttribute('x', labelPos.x);
+  label.setAttribute('y', labelPos.y);
+  label.classList.add('radial-label');
+  label.textContent = item.label;
+  itemLink.appendChild(label);
+
+  const iconPos = polarToCartesian(midAngle, NORMAL_RADIUS * ICON_RATIO);
+  const iconGroup = document.createElementNS(svgNS, 'g');
+  iconGroup.setAttribute('transform', `translate(${iconPos.x}, ${iconPos.y})`);
+  iconGroup.classList.add('radial-icon');
+  drawIcon(item.icon, iconGroup);
+  itemLink.appendChild(iconGroup);
+
+  // Hover real: entra → expande, sai → volta. Nada de mover o elemento no
+  // DOM (isso é o que causava o "travamento"). A expansão é geometria de
+  // verdade — o raio do setor aumenta e o texto/ícone acompanham — e não
+  // um transform/scale, que distorceria a fatia a partir do ponto errado.
+  function setRadius(radius) {
+    sector.setAttribute('d', sectorPath(startAngle, endAngle, radius));
+
+    const lp = polarToCartesian(midAngle, radius * LABEL_RATIO);
+    label.setAttribute('x', lp.x);
+    label.setAttribute('y', lp.y);
+
+    const ip = polarToCartesian(midAngle, radius * ICON_RATIO);
+    iconGroup.setAttribute('transform', `translate(${ip.x}, ${ip.y})`);
+  }
+
+  itemLink.addEventListener('mouseenter', () => {
+    itemLink.classList.add('is-active');
+    setRadius(HOVER_RADIUS);
+  });
+
+  itemLink.addEventListener('mouseleave', () => {
+    itemLink.classList.remove('is-active');
+    setRadius(NORMAL_RADIUS);
+  });
+
+  // A navegação em si é feita pelo próprio <a> (o navegador cuida do
+  // scroll); aqui só fechamos o disco.
+  itemLink.addEventListener('click', () => {
+    closeRadialMenu();
+  });
+
+  radialMenu.appendChild(itemLink);
+});
+
+const radialShine = document.createElementNS(svgNS, 'circle');
+radialShine.setAttribute('cx', cx);
+radialShine.setAttribute('cy', cy);
+radialShine.setAttribute('r', NORMAL_RADIUS);
+radialShine.setAttribute('fill', 'url(#radialShineGradient)');
+radialShine.classList.add('radial-shine');
+radialMenu.appendChild(radialShine);
+
+const radialOutline = document.createElementNS(svgNS, 'circle');
+radialOutline.setAttribute('cx', cx);
+radialOutline.setAttribute('cy', cy);
+radialOutline.setAttribute('r', NORMAL_RADIUS);
+radialOutline.classList.add('radial-outline');
+radialMenu.appendChild(radialOutline);
+
+function openRadialMenu() {
+  radialOverlay.classList.add('show');
+}
+
+function closeRadialMenu() {
+  radialOverlay.classList.remove('show');
+}
+
+radialBtn.addEventListener('click', openRadialMenu);
+
+radialOverlay.addEventListener('click', (e) => {
+  if (e.target === radialOverlay) closeRadialMenu();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeRadialMenu();
+});
